@@ -1,6 +1,12 @@
 var canvas;
 var canvas_context;
 
+var player_1_score = 0;
+var player_2_score = 0;
+const MAX_SCORE = 3;
+
+var player_won = false;
+
 var ball_x = 50;
 var ball_y = 50;
 var ball_speed_x = 10;
@@ -8,8 +14,8 @@ var ball_speed_y = 4;
 
 var first_paddle_y = 250;
 var second_paddle_y = 250;
-const PADDLE_HEIGHT = 70;
-const PADDLE_WIDTH = 20;
+const PADDLE_HEIGHT = 50;
+const PADDLE_WIDTH = 10;
 
 
 window.onload = function() {
@@ -28,6 +34,8 @@ window.onload = function() {
     var mouse_pos = calculateMousePos(evt);
     first_paddle_y = mouse_pos.y - (PADDLE_HEIGHT / 2);
   });
+
+  canvas.addEventListener('mousedown', handleMouseClick);
 }
 
 function drawBoard() {
@@ -48,39 +56,75 @@ function drawBall() {
 }
 
 function drawElements() {
+  if (player_won) {
+    if (player_1_score >= MAX_SCORE) {
+      canvas_context.fillText('Player 1 Wins!', 170, 100);
+    } else if (player_2_score >= MAX_SCORE) {
+      canvas_context.fillText('CPU wins!', 170, 100);
+    }
+
+    canvas_context.fillText('click to continue', 170, 500);
+    return;
+  }
   drawBoard();
   //Left paddle
-  drawPaddle(10, first_paddle_y, PADDLE_WIDTH, PADDLE_HEIGHT);
+  drawPaddle(5, first_paddle_y, PADDLE_WIDTH, PADDLE_HEIGHT);
 
   //Right paddle
-  drawPaddle(canvas.width - 30, second_paddle_y, PADDLE_WIDTH, PADDLE_HEIGHT);
+  drawPaddle(canvas.width - 15, second_paddle_y, PADDLE_WIDTH, PADDLE_HEIGHT);
   drawBall();
+  score('Player score: '+player_1_score, 50);
+  score('CPU score: '+player_2_score, canvas.width - 70);
+}
+
+function score(score, pos) {
+  canvas_context.fillText(score, pos, 100);
+}
+
+function computerAI() {
+  var second_paddle_y_center = second_paddle_y + (PADDLE_HEIGHT / 2);
+
+  if (second_paddle_y_center < ball_y + 25) {
+    second_paddle_y += 6;
+  } else if (second_paddle_y_center > ball_y - 25) {
+    second_paddle_y -= 6;
+  }
 }
 
 function moveBall() {
-  ball_x = ball_x + ball_speed_x;
-  ball_y = ball_y + ball_speed_y;
+  if (player_won) {
+    return;
+  }
+  computerAI();
+  ball_x += ball_speed_x;
+  ball_y += ball_speed_y;
 
   //Left wall
   if (ball_x < 0) {
     if (ball_y > first_paddle_y && ball_y < first_paddle_y + PADDLE_HEIGHT) {
       ball_speed_x = -ball_speed_x
-    } else {
-        ballReset();
-    }
-  }
 
-  if (ball_x > canvas.width) {
-    if (ball_y > second_paddle_y && ball_y < second_paddle_y + PADDLE_HEIGHT) {
-      ball_speed_x = -ball_speed_x
+      var delta_y = ball_y - (first_paddle_y + (PADDLE_HEIGHT / 2));
+
+      ball_speed_y = delta_y * 0.25
     } else {
-        ballReset();
+      player_2_score++;
+      ballReset();
     }
   }
 
   //Right wall
   if (ball_x > canvas.width) {
-    ball_speed_x = -ball_speed_x;
+    if (ball_y > second_paddle_y && ball_y < second_paddle_y + PADDLE_HEIGHT) {
+      ball_speed_x = -ball_speed_x
+
+      var delta_y = ball_y - (second_paddle_y + (PADDLE_HEIGHT / 2));
+
+      ball_speed_y = delta_y * 0.25
+    } else {
+      player_1_score++;
+      ballReset();
+    }
   }
 
   if (ball_y < 0 || ball_y > canvas.height) {
@@ -100,7 +144,21 @@ function calculateMousePos(evt) {
   };
 }
 
+function handleMouseClick(evt) {
+  if (player_won) {
+    player_1_score = 0;
+    player_2_score = 0;
+    player_won = false;
+  }
+}
+
 function ballReset() {
+  if (player_1_score >= MAX_SCORE || player_2_score >= MAX_SCORE) {
+    player_1_score = 0;
+    player_2_score = 0;
+    player_won = true;
+  }
+
   ball_speed_x = -ball_speed_x;
   ball_x = canvas.width / 2;
   ball_y = canvas.height / 2;
