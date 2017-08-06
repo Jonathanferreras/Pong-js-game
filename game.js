@@ -55,26 +55,38 @@ function drawBall() {
   canvas_context.fill();
 }
 
+function drawNet() {
+  for (var i = 0; i < canvas.height; i += 20) {
+    canvas_context.fillStyle = 'white';
+    canvas_context.fillRect(((canvas.width / 2) - 1), i, 2, 10);
+  }
+}
+
 function drawElements() {
+
   if (player_won) {
+    drawBoard();
+    canvas_context.fillStyle = 'white';
+
     if (player_1_score >= MAX_SCORE) {
       canvas_context.fillText('Player 1 Wins!', 170, 100);
     } else if (player_2_score >= MAX_SCORE) {
       canvas_context.fillText('CPU wins!', 170, 100);
     }
-
-    canvas_context.fillText('click to continue', 170, 500);
+    canvas_context.fillText('click to continue', 170, 150);
     return;
   }
+
   drawBoard();
+  drawNet();
   //Left paddle
   drawPaddle(5, first_paddle_y, PADDLE_WIDTH, PADDLE_HEIGHT);
 
   //Right paddle
   drawPaddle(canvas.width - 15, second_paddle_y, PADDLE_WIDTH, PADDLE_HEIGHT);
   drawBall();
-  score('Player score: '+player_1_score, 50);
-  score('CPU score: '+player_2_score, canvas.width - 70);
+  score('Player score: '+ player_1_score, 50);
+  score('CPU score: '+ player_2_score, canvas.width - 70);
 }
 
 function score(score, pos) {
@@ -95,7 +107,9 @@ function moveBall() {
   if (player_won) {
     return;
   }
+
   computerAI();
+
   ball_x += ball_speed_x;
   ball_y += ball_speed_y;
 
@@ -154,8 +168,6 @@ function handleMouseClick(evt) {
 
 function ballReset() {
   if (player_1_score >= MAX_SCORE || player_2_score >= MAX_SCORE) {
-    player_1_score = 0;
-    player_2_score = 0;
     player_won = true;
   }
 
